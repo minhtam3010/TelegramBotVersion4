@@ -12,7 +12,7 @@ var (
 	password = "quynhnhu2010"
 	host     = "localhost"
 	port     = "3306"
-	name     = "test"
+	name     = "ieltscenter"
 	sslmode  = "false"
 )
 
