@@ -1,6 +1,8 @@
 package main
 
+// origin --> TamTelegram
 import (
+	"errors"
 	"fmt"
 	"log"
 	"regexp"
@@ -77,26 +79,76 @@ func filterString(myStr string) (res []interface{}, dateTime []string) {
 	return res, dateTime
 }
 
-func CallBotInserted(db *gorm.DB, myStruct interface{}, tableName string) string {
-	db.Table(tableName).Select("*").Where("date_created >= DATE(NOW())").Find(&myStruct)
-	resInsert := fmt.Sprintf("%v", myStruct)
-	fmt.Println(resInsert)
-	return resInsert
+func CallBotInserted(db *gorm.DB, myStruct []interface{}, tableName []string) []string {
+	if len(myStruct) != len(tableName) {
+		return []string{errors.New("your input is not equal either the struct or table name").Error()}
+	}
+	switch len(myStruct) {
+	case 0:
+		return []string{errors.New("not found any struct or table name in your input").Error()}
+	case 1:
+		db.Table(tableName[0]).Select("*").Where("date_created >= DATE(NOW())").Find(&myStruct[0])
+		resInsert := fmt.Sprintf("%v", myStruct)
+		return []string{resInsert}
+	default:
+		var (
+			resInsert []string
+		)
+		for i, inter := range myStruct {
+			db.Table(tableName[i]).Select("*").Where("date_created >= DATE(NOW())").Find(&inter)
+			resInsert = append(resInsert, fmt.Sprintf("%v", inter))
+		}
+		return resInsert
+	}
 }
 
-func CallBotUpdated(db *gorm.DB, myStruct interface{}, tableName string) string {
-	db.Table(tableName).Select("*").Where("date_updated >= DATE(NOW()) and active = 1").Find(&myStruct)
-	resUpdate := fmt.Sprintf("%v", myStruct)
-	return resUpdate
+func CallBotUpdated(db *gorm.DB, myStruct []interface{}, tableName []string) []string {
+	if len(myStruct) != len(tableName) {
+		return []string{errors.New("your input is not equal either the struct or table name").Error()}
+	}
+	switch len(myStruct) {
+	case 0:
+		return []string{errors.New("not found any struct or table name in your input").Error()}
+	case 1:
+		db.Table(tableName[0]).Select("*").Where("date_updated >= DATE(NOW()) and active = 1").Find(&myStruct[0])
+		resUpdate := fmt.Sprintf("%v", myStruct)
+		return []string{resUpdate}
+	default:
+		var (
+			resUpdate []string
+		)
+		for i, inter := range myStruct {
+			db.Table(tableName[i]).Select("*").Where("date_updated >= DATE(NOW()) and active = 1").Find(&inter)
+			resUpdate = append(resUpdate, fmt.Sprintf("%v", inter))
+		}
+		return resUpdate
+	}
 }
 
-func CallBotDeleted(db *gorm.DB, myStruct interface{}, tableName string) string {
-	db.Table(tableName).Select("*").Where("date_updated >= DATE(NOW()) and active = 0").Find(&myStruct)
-	resDelete := fmt.Sprintf("%v", myStruct)
-	return resDelete
+func CallBotDeleted(db *gorm.DB, myStruct []interface{}, tableName []string) []string {
+	if len(myStruct) != len(tableName) {
+		return []string{errors.New("your input is not equal either the struct or table name").Error()}
+	}
+	switch len(myStruct) {
+	case 0:
+		return []string{errors.New("not found any struct or table name in your input").Error()}
+	case 1:
+		db.Table(tableName[0]).Select("*").Where("date_updated >= DATE(NOW()) and active = 0").Find(&myStruct[0])
+		resDelete := fmt.Sprintf("%v", myStruct)
+		return []string{resDelete}
+	default:
+		var (
+			resDelete []string
+		)
+		for i, inter := range myStruct {
+			db.Table(tableName[i]).Select("*").Where("date_updated >= DATE(NOW()) and active = 0").Find(&inter)
+			resDelete = append(resDelete, fmt.Sprintf("%v", inter))
+		}
+		return resDelete
+	}
 }
 
-func CallTelegramBot(DNS string, BotAPI string, myStruct interface{}, tableName string) {
+func CallTelegramBot(DNS string, BotAPI string, myStruct []interface{}, tableName []string) {
 	db, err := gorm.Open(mysql.Open(DNS), &gorm.Config{})
 	if err != nil {
 		return
@@ -116,125 +168,139 @@ func CallTelegramBot(DNS string, BotAPI string, myStruct interface{}, tableName 
 
 			// splitInputUser := strings.Split(update.Message.Text, " ")
 			if strings.ToLower(update.Message.Text) == "info" {
-				var (
-					str             []interface{}
-					resInsert       []interface{}
-					resUpdate       []interface{}
-					resDelete       []interface{}
-					datetime        []string
-					dateTime_insert [][]string
-					dateTime_update [][]string
-					dateTime_delete [][]string
-				)
 
-				getInsertData := CallBotInserted(db, myStruct, tableName)
-				split_data := strings.Split(getInsertData, "} {")
-				for _, i := range split_data {
-					str, datetime = filterString(i)
-					resInsert = append(resInsert, str)
-					dateTime_insert = append(dateTime_insert, datetime)
-				}
-
-				resInserted := "Inserted:\n"
-				today := "Information about Invoice table: " + ConvertToday(time.Now())
+				today := "Automation checking CRUD table: " + ConvertToday(time.Now())
 				msgToday := tgbotapi.NewMessage(update.Message.Chat.ID, today)
 				bot.Send(msgToday)
-				res := fmt.Sprintf("%v", resInsert[0])
-				if res != "[]" {
-					for i, _ := range resInsert {
-						getDate := dateTime_insert[i][0]
-						n := "Time Created -- " + getDate
-						if i+1 == len(resInsert) {
-							resInserted += n + ": %v"
-						} else {
-							resInserted += n + ": %v\n-------------------------------------------------------------------------------\n"
-						}
+				getAllInsertData := CallBotInserted(db, myStruct, tableName)
+				for i := 0; i < len(myStruct); i++ {
+					var (
+						str             []interface{}
+						resInsert       []interface{}
+						resUpdate       []interface{}
+						resDelete       []interface{}
+						datetime        []string
+						dateTime_insert [][]string
+						dateTime_update [][]string
+						dateTime_delete [][]string
+					)
+					split_data := strings.Split(getAllInsertData[i], "} {")
+					for _, i := range split_data {
+						str, datetime = filterString(i)
+						resInsert = append(resInsert, str)
+						dateTime_insert = append(dateTime_insert, datetime)
 					}
-					resInserted = fmt.Sprintf(resInserted, resInsert...)
-					msgInsert := tgbotapi.NewMessage(update.Message.Chat.ID, resInserted)
-					bot.Send(msgInsert)
-					msgStatisticInsert := tgbotapi.NewMessage(update.Message.Chat.ID, "Total inserted: "+strconv.Itoa(len(resInsert)))
-					bot.Send(msgStatisticInsert)
-				} else {
-					msgInsert := tgbotapi.NewMessage(update.Message.Chat.ID, "None of data inserted today!!!")
-					bot.Send(msgInsert)
-				}
 
-				getUpdateData := CallBotUpdated(db, myStruct, tableName)
-				split_data = strings.Split(getUpdateData, "} {")
-				for _, i := range split_data {
-					str, datetime = filterString(i)
-					resUpdate = append(resUpdate, str)
-					dateTime_update = append(dateTime_update, datetime)
-				}
+					line := "---------------------------------------------------------------------------"
+					msgLine := tgbotapi.NewMessage(update.Message.Chat.ID, line)
+					bot.Send(msgLine)
+					fmt.Println(tableName[i])
+					info := "Information about the '" + strings.ToUpper(tableName[i]) + "' table"
+					msgInfo := tgbotapi.NewMessage(update.Message.Chat.ID, info)
+					bot.Send(msgInfo)
 
-				resUpdated := "Updated:\n"
-				res = fmt.Sprintf("%v", resUpdate[0])
-				if res != "[]" {
-					for i, _ := range resUpdate {
-						getDate := dateTime_update[i][1]
-						n := "Time Updated -- " + getDate
-						if i+1 == len(resUpdate) {
-							resUpdated += n + ": %v"
-						} else {
-							resUpdated += n + ": %v\n-------------------------------------------------------------------------------\n"
+					resInserted := "Inserted:\n"
+					res := fmt.Sprintf("%v", resInsert[0])
+					if res != "[]" {
+						for i, _ := range resInsert {
+							getDate := dateTime_insert[i][0]
+							n := "Time Created -- " + getDate
+							if i+1 == len(resInsert) {
+								resInserted += n + ": %v"
+							} else {
+								resInserted += n + ": %v\n-------------------------------------------------------------------------------\n"
+							}
 						}
+						resInserted = fmt.Sprintf(resInserted, resInsert...)
+						msgInsert := tgbotapi.NewMessage(update.Message.Chat.ID, resInserted)
+						bot.Send(msgInsert)
+						msgStatisticInsert := tgbotapi.NewMessage(update.Message.Chat.ID, "Total inserted: "+strconv.Itoa(len(resInsert)))
+						bot.Send(msgStatisticInsert)
+					} else {
+						msgInsert := tgbotapi.NewMessage(update.Message.Chat.ID, "None of data inserted today!!!")
+						bot.Send(msgInsert)
 					}
-					resUpdated = fmt.Sprintf(resUpdated, resUpdate...)
-					msgUpdate := tgbotapi.NewMessage(update.Message.Chat.ID, resUpdated)
-					msgStatisticUpdate := tgbotapi.NewMessage(update.Message.Chat.ID, "Total updated: "+strconv.Itoa(len(resUpdate)))
-					bot.Send(msgUpdate)
-					bot.Send(msgStatisticUpdate)
-				} else {
-					msgUpdate := tgbotapi.NewMessage(update.Message.Chat.ID, "None of data updated today!!!")
-					bot.Send(msgUpdate)
+					getAllUpdateData := CallBotUpdated(db, myStruct, tableName)
+					split_data = strings.Split(getAllUpdateData[i], "} {")
+					for _, i := range split_data {
+						str, datetime = filterString(i)
+						resUpdate = append(resUpdate, str)
+						dateTime_update = append(dateTime_update, datetime)
+					}
 
-				}
-
-				getDeleteData := CallBotDeleted(db, myStruct, tableName)
-				split_data = strings.Split(getDeleteData, "} {")
-				for _, i := range split_data {
-					str, datetime = filterString(i)
-					resDelete = append(resDelete, str)
-					dateTime_delete = append(dateTime_delete, datetime)
-				}
-
-				resDeleted := "Deleted:\n"
-				res = fmt.Sprintf("%v", resDelete[0])
-				if res != "[]" {
-					for i, _ := range resDelete {
-						getDate := dateTime_delete[i][1]
-						n := "Time Deleted -- " + getDate
-						if i+1 == len(resDelete) {
-							resDeleted += n + ": %v"
-						} else {
-							resDeleted += n + ": %v\n-------------------------------------------------------------------------------\n"
+					resUpdated := "Updated:\n"
+					res = fmt.Sprintf("%v", resUpdate[0])
+					if res != "[]" {
+						for i, _ := range resUpdate {
+							getDate := dateTime_update[i][1]
+							n := "Time Updated -- " + getDate
+							if i+1 == len(resUpdate) {
+								resUpdated += n + ": %v"
+							} else {
+								resUpdated += n + ": %v\n-------------------------------------------------------------------------------\n"
+							}
 						}
+						resUpdated = fmt.Sprintf(resUpdated, resUpdate...)
+						msgUpdate := tgbotapi.NewMessage(update.Message.Chat.ID, resUpdated)
+						msgStatisticUpdate := tgbotapi.NewMessage(update.Message.Chat.ID, "Total updated: "+strconv.Itoa(len(resUpdate)))
+						bot.Send(msgUpdate)
+						bot.Send(msgStatisticUpdate)
+					} else {
+						msgUpdate := tgbotapi.NewMessage(update.Message.Chat.ID, "None of data updated today!!!")
+						bot.Send(msgUpdate)
 					}
-					resDeleted = fmt.Sprintf(resDeleted, resDelete...)
-					msgDelete := tgbotapi.NewMessage(update.Message.Chat.ID, resDeleted)
+					getAllDeleteData := CallBotDeleted(db, myStruct, tableName)
+					split_data = strings.Split(getAllDeleteData[i], "} {")
+					for _, i := range split_data {
+						str, datetime = filterString(i)
+						resDelete = append(resDelete, str)
+						dateTime_delete = append(dateTime_delete, datetime)
+					}
 
-					msgStatisticDelete := tgbotapi.NewMessage(update.Message.Chat.ID, "Total deleted: "+strconv.Itoa(len(resDelete)))
+					resDeleted := "Deleted:\n"
+					res = fmt.Sprintf("%v", resDelete[0])
+					if res != "[]" {
+						for i, _ := range resDelete {
+							getDate := dateTime_delete[i][1]
+							n := "Time Deleted -- " + getDate
+							if i+1 == len(resDelete) {
+								resDeleted += n + ": %v"
+							} else {
+								resDeleted += n + ": %v\n-------------------------------------------------------------------------------\n"
+							}
+						}
+						resDeleted = fmt.Sprintf(resDeleted, resDelete...)
+						msgDelete := tgbotapi.NewMessage(update.Message.Chat.ID, resDeleted)
 
-					bot.Send(msgDelete)
-					bot.Send(msgStatisticDelete)
-				} else {
-					msgDelete := tgbotapi.NewMessage(update.Message.Chat.ID, "None of data deleted today!!!")
-					bot.Send(msgDelete)
+						msgStatisticDelete := tgbotapi.NewMessage(update.Message.Chat.ID, "Total deleted: "+strconv.Itoa(len(resDelete)))
 
+						bot.Send(msgDelete)
+						bot.Send(msgStatisticDelete)
+					} else {
+						msgDelete := tgbotapi.NewMessage(update.Message.Chat.ID, "None of data deleted today!!!")
+						bot.Send(msgDelete)
+					}
 				}
-				break
 			}
+			break
 		}
 	}
 }
 
 func main() {
-	dns := "root:quynhnhu2010@tcp(127.0.0.1:3306)/BotTest?charset=utf8mb4&parseTime=True&loc=Local"
+	dns := "root:leminhtamâđđâ@tcp(127.0.0.1:3306)/BotTest?charset=utf8mb4&parseTime=True&loc=Local"
 
-	// var allTable []T1
-	// var allTable2 []T2
+	// var allTable []interface{}
+	var allTable1 []T1
+	var allTable2 []T2
 	var allTable3 []T3
-	CallTelegramBot(dns, "5423441007:AAGvULEN7X2nZU2uZfoMGUfEQBCrNWzQg7k", allTable3, "table3")
-	// CallTelegramBot(dns, "5423441007:AAGvULEN7X2nZU2uZfoMGUfEQBCrNWzQg7k", allTable2)
+
+	allTable := []interface{}{
+		allTable1,
+		allTable2,
+		allTable3,
+	}
+	allTableName := []string{"table1", "table2", "table3"}
+
+	CallTelegramBot(dns, "5423441007:AAGvULEN7X2nZU2uZfoMGUfEQBCrNWzQg7k", allTable, allTableName)
 }
