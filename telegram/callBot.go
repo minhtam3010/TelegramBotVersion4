@@ -4,12 +4,16 @@ import (
 	"fmt"
 	"log"
 	"minhtam/convert"
+	"minhtam/dashboard"
 	"minhtam/database"
+	"os"
 	"strconv"
 	"strings"
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/johnfercher/maroto/pkg/consts"
+	"github.com/johnfercher/maroto/pkg/pdf"
 	"gorm.io/driver/mysql"
 
 	"gorm.io/gorm"
@@ -33,7 +37,6 @@ func CallTelegramBot(DNS string, BotAPI string, myStruct []interface{}, tableNam
 	for update := range updates {
 		if update.Message != nil { // If we got a message
 
-			// splitInputUser := strings.Split(update.Message.Text, " ")
 			if strings.ToLower(update.Message.Text) == "info" {
 
 				today := "Automation checking CRUD table: " + convert.ConvertToday(time.Now())
@@ -50,6 +53,7 @@ func CallTelegramBot(DNS string, BotAPI string, myStruct []interface{}, tableNam
 						dateTime_insert [][]string
 						dateTime_update [][]string
 						dateTime_delete [][]string
+						total           []int
 					)
 					split_data := strings.Split(getAllInsertData[i], "} {")
 					for _, i := range split_data {
@@ -78,6 +82,7 @@ func CallTelegramBot(DNS string, BotAPI string, myStruct []interface{}, tableNam
 								resInserted += n + ": %v\n-------------------------------------------------------------------------------\n"
 							}
 						}
+						total = append(total, len(resInsert))
 						resInserted = fmt.Sprintf(resInserted, resInsert...)
 						msgInsert := tgbotapi.NewMessage(update.Message.Chat.ID, resInserted)
 						bot.Send(msgInsert)
@@ -107,6 +112,7 @@ func CallTelegramBot(DNS string, BotAPI string, myStruct []interface{}, tableNam
 								resUpdated += n + ": %v\n-------------------------------------------------------------------------------\n"
 							}
 						}
+						total = append(total, len(resUpdate))
 						resUpdated = fmt.Sprintf(resUpdated, resUpdate...)
 						msgUpdate := tgbotapi.NewMessage(update.Message.Chat.ID, resUpdated)
 						msgStatisticUpdate := tgbotapi.NewMessage(update.Message.Chat.ID, "Total updated: "+strconv.Itoa(len(resUpdate)))
@@ -136,6 +142,7 @@ func CallTelegramBot(DNS string, BotAPI string, myStruct []interface{}, tableNam
 								resDeleted += n + ": %v\n-------------------------------------------------------------------------------\n"
 							}
 						}
+						total = append(total, len(resDelete))
 						resDeleted = fmt.Sprintf(resDeleted, resDelete...)
 						msgDelete := tgbotapi.NewMessage(update.Message.Chat.ID, resDeleted)
 
@@ -147,6 +154,30 @@ func CallTelegramBot(DNS string, BotAPI string, myStruct []interface{}, tableNam
 						msgDelete := tgbotapi.NewMessage(update.Message.Chat.ID, "None of data deleted today!!!")
 						bot.Send(msgDelete)
 					}
+					m := pdf.NewMaroto(consts.Portrait, consts.A4)
+					m.SetPageMargins(10, 10, 10)
+					dashboard.BuildHeading(m)
+					dashboard.BuildChart(m, total)
+
+					err := m.OutputFileAndClose("myFile.pdf")
+					if err != nil {
+						fmt.Println("Could not save PDF: ", err)
+						os.Exit(1)
+					}
+					f, err := os.ReadFile("myFile.pdf")
+					if err != nil {
+						panic(err)
+					}
+
+					FileBytes := tgbotapi.FileBytes{
+						Name:  "res.pdf",
+						Bytes: f,
+					}
+
+					msg := tgbotapi.NewDocument(update.Message.Chat.ID, FileBytes)
+					msg.ReplyToMessageID = update.Message.MessageID
+					bot.Send(msg)
+					fmt.Println("PDF saved successfully")
 				}
 			}
 			break

@@ -1,6 +1,8 @@
 package main
 
-import "minhtam/telegram"
+import (
+	"minhtam/telegram"
+)
 
 // origin --> TamTelegram
 
@@ -33,7 +35,6 @@ type T3 struct {
 func main() {
 	dns := "root:quynhnhu2010@tcp(127.0.0.1:3306)/ieltscenter?charset=utf8mb4&parseTime=True&loc=Local"
 
-	// var allTable []interface{}
 	var allTable1 []T1
 	var allTable2 []T2
 	var allTable3 []T3
