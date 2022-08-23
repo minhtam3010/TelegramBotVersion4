@@ -1,0 +1,141 @@
+package PDF
+
+import (
+	"fmt"
+	"strings"
+	"time"
+
+	"github.com/jung-kurt/gofpdf"
+)
+
+func _PDFPage() *gofpdf.Fpdf {
+	pdf := gofpdf.New("P", "mm", "A4", "")
+	pdf.AddPage()
+	return pdf
+}
+
+func _SetHeader(pdf *gofpdf.Fpdf) {
+	pdf.Image("GL.jpg", 155, 5, 50, 20, false, "", 0, "")
+	pdf.SetAlpha(1.0, "Normal") // images := func() {
+	pdf.SetFont("Times", "B", 14)
+	pdf.CellFormat(40, 5, time.Now().Format("Mon Jan 2, 2006"), "0", 0, "R", false, 0, "")
+	// pdf.Ln(5)
+	pdf.SetFont("Times", "BI", 14)
+	pdf.CellFormat(143, 30, "Education", "0", 0, "R", false, 0, "")
+
+	pdf.Ln(20)
+	pdf.SetFont("Times", "B", 28)
+	pdf.SetTextColor(255, 0, 0)
+	pdf.CellFormat(130, 5, "Daily Report\n", "0", 0, "R", false, 0, "")
+}
+
+func _SetFooter(pdf *gofpdf.Fpdf) {
+	pdf.SetFooterFunc(func() {
+		// Position at 1.5 cm from bottom
+		pdf.SetY(-15)
+		// Arial italic 8
+		pdf.SetFont("Arial", "I", 8)
+		// Text color in gray
+		pdf.SetTextColor(128, 128, 128)
+		// Page number
+		pdf.CellFormat(0, 10, fmt.Sprintf("Page %d", pdf.PageNo()),
+			"", 0, "C", false, 0, "")
+	})
+}
+
+func _SetData(pdf *gofpdf.Fpdf, tableName []string, crud []string, res []string) {
+	var (
+		idx = 0
+	)
+	for i, _ := range tableName {
+		pdf.SetFont("Times", "B", 20)
+		pdf.SetTextColor(70, 95, 195)
+		pdf.CellFormat(116, 5, "Information about the '"+strings.ToUpper(tableName[i])+"' table", "0", 0, "R", false, 0, "")
+		pdf.Ln(10)
+		for idx_crud, _ := range crud {
+			if len(res[idx]) == 0 {
+				pdf.SetFont("Times", "B", 18)
+				pdf.SetTextColor(70, 95, 19)
+				pdf.CellFormat(40, 5, crud[idx_crud]+"\n", "0", 0, "L", false, 0, "")
+				pdf.SetFont("Times", "B", 14)
+				pdf.SetTextColor(0, 0, 0)
+				pdf.CellFormat(20, 5, "None of data "+crud[idx_crud], "0", 0, "L", false, 0, "")
+				idx_crud++
+				idx++
+				pdf.Ln(15)
+			} else {
+				pdf.SetFont("Times", "B", 18)
+				pdf.SetTextColor(70, 95, 19)
+				pdf.CellFormat(40, 5, crud[idx_crud]+"\n", "0", 0, "L", false, 0, "")
+				pdf.Ln(5)
+				pdf.SetFont("Times", "B", 14)
+				pdf.SetTextColor(0, 0, 0)
+				pdf.Ln(5)
+				pdf.MultiCell(250, 5, res[idx], "0", "0", false)
+				pdf.Ln(10)
+				idx++
+			}
+		}
+	}
+}
+
+func _DrawTable(pdf *gofpdf.Fpdf, value [][]string) {
+	var (
+		header = []string{"Table Name", "Inserted", "Updated", "Deleted", "Total"}
+	)
+	// Colors, line width and bold font
+	pdf.SetFillColor(128, 212, 255)
+	pdf.SetTextColor(0, 0, 0)
+	pdf.SetDrawColor(128, 0, 0)
+	pdf.SetLineWidth(.3)
+	pdf.SetFont("", "B", 0)
+	// 	Header
+	w := []float64{40, 25, 25, 25, 20}
+	wSum := 0.0
+	for _, v := range w {
+		wSum += v
+	}
+	left := (210 - wSum) / 2
+	pdf.SetX(left)
+	for j, str := range header {
+		pdf.CellFormat(w[j], 7, str, "1", 0, "C", true, 0, "")
+	}
+	pdf.Ln(-1)
+	// Color and font restoration
+	pdf.SetFillColor(224, 235, 255)
+	pdf.SetTextColor(0, 0, 0)
+	pdf.SetFont("", "", 0)
+	// 	Data
+	fill := false
+	for _, c := range value {
+		pdf.SetX(left)
+		pdf.CellFormat(w[0], 10, c[0], "LR", 0, "L", fill, 0, "")
+		pdf.CellFormat(w[1], 10, c[1], "LR", 0, "C", fill, 0, "")
+		pdf.CellFormat(w[2], 10, c[2], "LR", 0, "C", fill, 0, "")
+		pdf.CellFormat(w[3], 10, c[3], "LR", 0, "C", fill, 0, "")
+		pdf.CellFormat(w[4], 10, c[4], "LR", 0, "C", fill, 0, "")
+		pdf.Ln(-1)
+		fill = !fill
+	}
+	pdf.SetX(left)
+	pdf.CellFormat(wSum, 0, "", "T", 0, "", false, 0, "")
+}
+
+func CreatePDF(total [][]string, tableName []string, crud []string, res []string) (err error){
+	pdf := _PDFPage()
+	_SetHeader(pdf)
+	_SetFooter(pdf)
+
+	pdf.Ln(25)
+	pdf.SetFont("Times", "B", 14)
+
+	pdf.Image("result.png", 5, 55, 200, 40, false, "", 0, "")
+	pdf.SetAlpha(1.0, "Normal")
+	pdf.Ln(65)
+	_DrawTable(pdf, total)
+	pdf.AddPage()
+	pdf.Ln(40)
+	_SetData(pdf, tableName, crud, res)
+	err = pdf.OutputFileAndClose("report.pdf")
+	return err
+}

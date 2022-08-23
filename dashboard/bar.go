@@ -3,12 +3,14 @@ package dashboard
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/johnfercher/maroto/pkg/color"
 	"github.com/johnfercher/maroto/pkg/consts"
 	"github.com/johnfercher/maroto/pkg/pdf"
 	"github.com/johnfercher/maroto/pkg/props"
 	"github.com/wcharczuk/go-chart/v2"
+	"github.com/wcharczuk/go-chart/v2/drawing"
 )
 
 // func main() {
@@ -16,7 +18,7 @@ import (
 
 // 	m.SetPageMargins(10, 10, 10)
 // 	buildHeading(m)
-	
+
 // 	buildChart(m)
 // 	// tableHeading := []string{"Fruit", "Description", "Price", "A", "B", "C", "D", "E"}
 // 	// contents := [][]string{{"Golang", "playground", "2", "A", "B", "C", "D", "E"}, {"Python", "Easy to Learn", "2", "A", "B", "C", "D", "E"}}
@@ -101,13 +103,12 @@ func buildDatabaseList(m pdf.Maroto, tableName string, tableHeading []string, co
 	})
 }
 
-func drawChart(total []int) {
-	if len(total) != 3{
-		return
-	}
-
+func drawChart(total []int, tableName string) {
 	graph := chart.BarChart{
-		Title: "GiaoLang Chart",
+		Title: "GiaoLang Chart " + "--- " +  strings.ToUpper(tableName) + " ---",
+		TitleStyle: chart.Style{
+			FontColor: drawing.ColorBlue,
+		},
 		Background: chart.Style{
 			Padding: chart.Box{
 				Top: 30,
@@ -121,20 +122,23 @@ func drawChart(total []int) {
 			{Value: float64(total[2]), Label: "DELETE"},
 		},
 	}
-	f, _ := os.Create("result.png")
+	f, err := os.Create("images/result_" + tableName + ".png")
+	if err != nil {
+		panic(err)
+	}
 	defer f.Close()
 	graph.Render(chart.PNG, f)
 }
 
-func BuildChart(m pdf.Maroto, total []int) {
-	drawChart(total)
+func BuildChart(m pdf.Maroto, total []int, tableName string) {
+	drawChart(total, tableName)
 	m.Row(50, func() {
 		m.Col(12, func() {
-			err := m.FileImage("result.png", props.Rect{
+			err := m.FileImage("images/result_" + tableName + ".png", props.Rect{
 				Center: true,
 				Percent: 100,
 			})
-		
+			fmt.Println(err, tableName)
 			if err != nil {
 				fmt.Println("Not found any images: ", err)
 			}

@@ -23,3 +23,10 @@ func FilterString(myStr string) (res []interface{}, dateTime []string) {
 	}
 	return res, dateTime
 }
+
+func Sum(arr []int) (total int){
+	for i := 0; i < len(arr); i++ {
+		total += arr[i]
+	}
+	return
+}
