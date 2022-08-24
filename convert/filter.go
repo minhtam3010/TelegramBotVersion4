@@ -1,7 +1,9 @@
 package convert
 
 import (
+	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -27,6 +29,18 @@ func FilterString(myStr string) (res []interface{}, dateTime []string) {
 func Sum(arr []int) (total int){
 	for i := 0; i < len(arr); i++ {
 		total += arr[i]
+	}
+	return
+}
+
+func SumTotal(arr2d [][]string) (total int) {
+	for i := 0; i < len(arr2d); i++ {
+		getInt, err := strconv.Atoi(arr2d[i][4])
+		if err != nil {
+			fmt.Errorf("Error while parsing: ", err)
+			return
+		}
+		total += getInt
 	}
 	return
 }

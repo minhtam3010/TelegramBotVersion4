@@ -46,5 +46,5 @@ func main() {
 	}
 	allTableName := []string{"table1", "table2", "table3"}
 
-	telegram.CallTelegramBot(dns, "5536638562:AAGwW2gOXheW4LGAtV3c4XevzO4HiFGsmqQ", allTable, allTableName)
+	telegram.CallTelegramBot(dns, "5781602901:AAE1xyqq11PoKNcXCPj0TJCOubEBrf9W3FA", allTable, allTableName)
 }

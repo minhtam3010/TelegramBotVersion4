@@ -121,20 +121,28 @@ func _DrawTable(pdf *gofpdf.Fpdf, value [][]string) {
 	pdf.CellFormat(wSum, 0, "", "T", 0, "", false, 0, "")
 }
 
-func CreatePDF(total [][]string, tableName []string, crud []string, res []string) (err error){
+func CreatePDF(total [][]string, tableName []string, crud []string, res []string, image []string) (err error) {
 	pdf := _PDFPage()
 	_SetHeader(pdf)
 	_SetFooter(pdf)
 
 	pdf.Ln(25)
 	pdf.SetFont("Times", "B", 14)
-
-	pdf.Image("result.png", 5, 55, 200, 40, false, "", 0, "")
-	pdf.SetAlpha(1.0, "Normal")
-	pdf.Ln(65)
 	_DrawTable(pdf, total)
-	pdf.AddPage()
-	pdf.Ln(40)
+	pdf.Ln(65)
+	for i, img := range image {
+		if img != "" {
+			if i == 0 {
+				pdf.Image(img, 20, 120, 155, 140, false, "", 0, "")
+				pdf.SetAlpha(1.0, "Normal")
+				pdf.AddPage()
+				} else {
+				pdf.Image(img, 20, 60, 155, 140, false, "", 0, "")
+				pdf.SetAlpha(1.0, "Normal")
+				pdf.AddPage()
+			}
+		}
+	}
 	_SetData(pdf, tableName, crud, res)
 	err = pdf.OutputFileAndClose("report.pdf")
 	return err

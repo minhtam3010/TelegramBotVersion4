@@ -5,6 +5,7 @@ import (
 	"log"
 	"minhtam/PDF"
 	"minhtam/convert"
+	"minhtam/dashboard"
 	"minhtam/database"
 	"os"
 	"strconv"
@@ -45,6 +46,7 @@ func CallTelegramBot(DNS string, BotAPI string, myStruct []interface{}, tableNam
 					total   [][]string
 					crud    = []string{"Inserted", "Updated", "Deleted"}
 					res_all []string
+					image   []string
 				)
 				for i := 0; i < len(myStruct); i++ {
 					var (
@@ -148,14 +150,22 @@ func CallTelegramBot(DNS string, BotAPI string, myStruct []interface{}, tableNam
 					}
 
 					total_crud = append(total_crud, strconv.Itoa(sum_crud))
-					// if convert.Sum(total) != 0 {
-					// 	dashboard.BuildChart(m, total, tableName[i])
-					// } else {
-					// 	fmt.Println("Nothing happened today")
-					// }
+					if sum_crud != 0 {
+						image = append(image, dashboard.DrawChart([]int{len(resInsert), len(resUpdate), len(resDelete)}, tableName[i]))
+					} else {
+						fmt.Println("This table " + tableName[i] + " doesn't have value")
+					}
+
 					total = append(total, total_crud)
+
 				}
-				err = PDF.CreatePDF(total, tableName, crud, res_all)
+				if convert.SumTotal(total) == 0 {
+					msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Nothing happened today!!!")
+					bot.Send(msg)
+					return
+				}
+
+				err = PDF.CreatePDF(total, tableName, crud, res_all, image)
 				if err != nil {
 					panic(err)
 				}
@@ -169,7 +179,7 @@ func CallTelegramBot(DNS string, BotAPI string, myStruct []interface{}, tableNam
 					Bytes: f,
 				}
 				msg := tgbotapi.NewDocument(update.Message.Chat.ID, FileBytes)
-				msg.ReplyToMessageID = update.Message.MessageID
+				// msg.ReplyToMessageID = update.Message.MessageID
 				bot.Send(msg)
 				fmt.Println("PDF saved successfully")
 			}
