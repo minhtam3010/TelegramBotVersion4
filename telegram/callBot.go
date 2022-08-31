@@ -18,6 +18,9 @@ import (
 	"gorm.io/gorm"
 )
 
+/*
+
+ */
 func CallTelegramBot(DNS string, BotAPI string, myStruct []interface{}, tableName []string) {
 	db, err := gorm.Open(mysql.Open(DNS), &gorm.Config{})
 	if err != nil {
@@ -50,16 +53,16 @@ func CallTelegramBot(DNS string, BotAPI string, myStruct []interface{}, tableNam
 				)
 				for i := 0; i < len(myStruct); i++ {
 					var (
-						total_crud      []string
-						str             []interface{}
-						resInsert       []interface{}
-						resUpdate       []interface{}
-						resDelete       []interface{}
-						datetime        []string
-						dateTime_insert [][]string
-						dateTime_update [][]string
-						dateTime_delete [][]string
-						sum_crud        int
+						total_crud                                         []string
+						str                                                []interface{}
+						resInsert                                          []interface{}
+						resUpdate                                          []interface{}
+						resDelete                                          []interface{}
+						datetime                                           []string
+						dateTime_insert                                    [][]string
+						dateTime_update                                    [][]string
+						dateTime_delete                                    [][]string
+						sum_crud, total_insert, total_update, total_delete int
 					)
 					total_crud = append(total_crud, strings.ToUpper(tableName[i]))
 					split_data := strings.Split(getAllInsertData[i], "} {")
@@ -68,11 +71,11 @@ func CallTelegramBot(DNS string, BotAPI string, myStruct []interface{}, tableNam
 						resInsert = append(resInsert, str)
 						dateTime_insert = append(dateTime_insert, datetime)
 					}
-
 					resInserted := ""
 					res := fmt.Sprintf("%v", resInsert[0])
 					if res != "[]" {
 						for i, _ := range resInsert {
+							total_insert++
 							getDate := dateTime_insert[i][0]
 							n := "Time Created -- " + getDate
 							if i+1 == len(resInsert) {
@@ -102,6 +105,7 @@ func CallTelegramBot(DNS string, BotAPI string, myStruct []interface{}, tableNam
 					res = fmt.Sprintf("%v", resUpdate[0])
 					if res != "[]" {
 						for i, _ := range resUpdate {
+							total_update++
 							getDate := dateTime_update[i][1]
 							n := "Time Updated -- " + getDate
 							if i+1 == len(resUpdate) {
@@ -131,6 +135,7 @@ func CallTelegramBot(DNS string, BotAPI string, myStruct []interface{}, tableNam
 					res = fmt.Sprintf("%v", resDelete[0])
 					if res != "[]" {
 						for i, _ := range resDelete {
+							total_delete++
 							getDate := dateTime_delete[i][1]
 							n := "Time Deleted -- " + getDate
 							if i+1 == len(resDelete) {
@@ -148,12 +153,9 @@ func CallTelegramBot(DNS string, BotAPI string, myStruct []interface{}, tableNam
 						res_all = append(res_all, "")
 						sum_crud += 0
 					}
-
 					total_crud = append(total_crud, strconv.Itoa(sum_crud))
 					if sum_crud != 0 {
-						image = append(image, dashboard.DrawChart([]int{len(resInsert), len(resUpdate), len(resDelete)}, tableName[i]))
-					} else {
-						fmt.Println("This table " + tableName[i] + " doesn't have value")
+						image = append(image, dashboard.DrawChart([]int{total_insert, total_update, total_delete}, tableName[i]))
 					}
 
 					total = append(total, total_crud)
@@ -186,4 +188,5 @@ func CallTelegramBot(DNS string, BotAPI string, myStruct []interface{}, tableNam
 			break
 		}
 	}
+
 }

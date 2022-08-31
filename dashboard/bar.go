@@ -127,7 +127,7 @@ import (
 // 	graph.Render(chart.PNG, f)
 // }
 
-func DrawChart(total []int, tableName string) (image string){
+func DrawChart(total []int, tableName string) (image string) {
 	if convert.Sum(total) == 0 {
 		return
 	}
