@@ -50,8 +50,9 @@ func _SetData(pdf *gofpdf.Fpdf, tableName []string, crud []string, res []string)
 	for i, _ := range tableName {
 		pdf.SetFont("Times", "B", 20)
 		pdf.SetTextColor(70, 95, 195)
-		pdf.CellFormat(116, 5, "Information about the '"+strings.ToUpper(tableName[i])+"' table", "0", 0, "R", false, 0, "")
+		pdf.CellFormat(130, 5, "Information about the '"+strings.ToUpper(tableName[i])+"' table", "0", 0, "R", false, 0, "")
 		pdf.Ln(10)
+		tr := pdf.UnicodeTranslatorFromDescriptor("")
 		for idx_crud, _ := range crud {
 			if len(res[idx]) == 0 {
 				pdf.SetFont("Times", "B", 18)
@@ -69,9 +70,10 @@ func _SetData(pdf *gofpdf.Fpdf, tableName []string, crud []string, res []string)
 				pdf.CellFormat(40, 5, crud[idx_crud]+"\n", "0", 0, "L", false, 0, "")
 				pdf.Ln(5)
 				pdf.SetFont("Times", "B", 14)
+				pdf.AddUTF8Font("Times", "", "")
 				pdf.SetTextColor(0, 0, 0)
 				pdf.Ln(5)
-				pdf.MultiCell(250, 5, res[idx], "0", "0", false)
+				pdf.MultiCell(250, 5, tr(res[idx]), "0", "0", false)
 				pdf.Ln(10)
 				idx++
 			}
