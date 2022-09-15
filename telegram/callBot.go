@@ -50,8 +50,12 @@ func CallTelegramBot(DNS string, BotAPI string, myStruct []interface{}, tableNam
 					crud    = []string{"Inserted", "Updated", "Deleted"}
 					res_all []string
 					image   []string
+					allCol []string
 				)
 				for i := 0; i < len(myStruct); i++ {
+					allCol = append(allCol, database.GetColName(db, tableName[i]))
+					log.Println(allCol)
+
 					var (
 						total_crud                                         []string
 						str                                                []interface{}
@@ -167,7 +171,7 @@ func CallTelegramBot(DNS string, BotAPI string, myStruct []interface{}, tableNam
 					return
 				}
 
-				err = PDF.CreatePDF(total, tableName, crud, res_all, image)
+				err = PDF.CreatePDF(total, tableName, crud, res_all, image, allCol)
 				if err != nil {
 					panic(err)
 				}

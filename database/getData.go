@@ -7,6 +7,10 @@ import (
 	"gorm.io/gorm"
 )
 
+type ColumnName struct {
+	ColName string
+}
+
 func GetData(db *gorm.DB, myStruct []interface{}, tableName []string, option string) []string {
 	var (
 		query_insert = "date_created >= DATE(NOW())"
@@ -124,4 +128,16 @@ func CallBotDeleted(db *gorm.DB, myStruct []interface{}, tableName []string) []s
 		}
 		return resDelete
 	}
+}
+
+func GetColName(db *gorm.DB, tableName string) string{
+	var col ColumnName
+	tx := db.Select("COLUMN_NAME").Where("TABLE_SCHEMA = 'defaultdb' AND TABLE_NAME = ?", tableName).Table("INFORMATION_SCHEMA.COLUMNS")
+	var formatCol string
+	rows, _ := tx.Rows()
+	for rows.Next() {
+		_ = rows.Scan(&col.ColName)
+		formatCol += col.ColName + "\t"
+	}
+	return formatCol
 }

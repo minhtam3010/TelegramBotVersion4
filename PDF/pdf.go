@@ -43,7 +43,7 @@ func _SetFooter(pdf *gofpdf.Fpdf) {
 	})
 }
 
-func _SetData(pdf *gofpdf.Fpdf, tableName []string, crud []string, res []string) {
+func _SetData(pdf *gofpdf.Fpdf, tableName []string, crud []string, res []string, allCol []string) {
 	var (
 		idx = 0
 	)
@@ -51,6 +51,10 @@ func _SetData(pdf *gofpdf.Fpdf, tableName []string, crud []string, res []string)
 		pdf.SetFont("Times", "B", 20)
 		pdf.SetTextColor(70, 95, 195)
 		pdf.CellFormat(130, 5, "Information about the '"+strings.ToUpper(tableName[i])+"' table", "0", 0, "R", false, 0, "")
+		pdf.Ln(10)
+		pdf.SetFont("Times", "B", 14)
+		pdf.SetTextColor(70, 95, 19)
+		pdf.CellFormat(40, 5, "ColumnName: '"+strings.ToUpper(allCol[i]), "0", 0, "L", false, 0, "")
 		pdf.Ln(10)
 		tr := pdf.UnicodeTranslatorFromDescriptor("")
 		for idx_crud := range crud {
@@ -123,7 +127,7 @@ func _DrawTable(pdf *gofpdf.Fpdf, value [][]string) {
 	pdf.CellFormat(wSum, 0, "", "T", 0, "", false, 0, "")
 }
 
-func CreatePDF(total [][]string, tableName []string, crud []string, res []string, image []string) (err error) {
+func CreatePDF(total [][]string, tableName []string, crud []string, res []string, image []string, allCol []string) (err error) {
 	pdf := _PDFPage()
 	_SetHeader(pdf)
 	_SetFooter(pdf)
@@ -145,7 +149,7 @@ func CreatePDF(total [][]string, tableName []string, crud []string, res []string
 			}
 		}
 	}
-	_SetData(pdf, tableName, crud, res)
+	_SetData(pdf, tableName, crud, res, allCol)
 	err = pdf.OutputFileAndClose("report.pdf")
 	return err
 }
