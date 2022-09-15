@@ -47,13 +47,13 @@ func _SetData(pdf *gofpdf.Fpdf, tableName []string, crud []string, res []string)
 	var (
 		idx = 0
 	)
-	for i, _ := range tableName {
+	for i := range tableName {
 		pdf.SetFont("Times", "B", 20)
 		pdf.SetTextColor(70, 95, 195)
 		pdf.CellFormat(130, 5, "Information about the '"+strings.ToUpper(tableName[i])+"' table", "0", 0, "R", false, 0, "")
 		pdf.Ln(10)
 		tr := pdf.UnicodeTranslatorFromDescriptor("")
-		for idx_crud, _ := range crud {
+		for idx_crud := range crud {
 			if len(res[idx]) == 0 {
 				pdf.SetFont("Times", "B", 18)
 				pdf.SetTextColor(70, 95, 19)

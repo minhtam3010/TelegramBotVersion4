@@ -74,7 +74,7 @@ func CallTelegramBot(DNS string, BotAPI string, myStruct []interface{}, tableNam
 					resInserted := ""
 					res := fmt.Sprintf("%v", resInsert[0])
 					if res != "[]" {
-						for i, _ := range resInsert {
+						for i := range resInsert {
 							total_insert++
 							getDate := dateTime_insert[i][0]
 							n := "Time Created -- " + getDate
@@ -104,7 +104,7 @@ func CallTelegramBot(DNS string, BotAPI string, myStruct []interface{}, tableNam
 					resUpdated := ""
 					res = fmt.Sprintf("%v", resUpdate[0])
 					if res != "[]" {
-						for i, _ := range resUpdate {
+						for i := range resUpdate {
 							total_update++
 							getDate := dateTime_update[i][1]
 							n := "Time Updated -- " + getDate
@@ -134,7 +134,7 @@ func CallTelegramBot(DNS string, BotAPI string, myStruct []interface{}, tableNam
 					resDeleted := ""
 					res = fmt.Sprintf("%v", resDelete[0])
 					if res != "[]" {
-						for i, _ := range resDelete {
+						for i := range resDelete {
 							total_delete++
 							getDate := dateTime_delete[i][1]
 							n := "Time Deleted -- " + getDate
